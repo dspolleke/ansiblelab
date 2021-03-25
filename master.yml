@@ -1,0 +1,61 @@
+---
+- name: provision master vagrant host
+  hosts: all
+  become: true
+
+  vars: 
+    packages:
+    - epel-release
+    - vim
+    - screen
+    - ansible
+    - git
+    - tmux
+    - figlet
+    pippackages:
+    - stormssh
+    - ansible-lint
+
+  tasks:
+
+  - name: pubkey
+    copy:
+      src: files/vagrant.priv
+      dest: "/home/vagrant/.ssh/id_rsa"
+      owner: vagrant
+      group: vagrant
+      mode: '0600'
+
+  - name: hosts file
+    copy:
+      src: files/hosts
+      dest: /etc/hosts
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: install packages
+    yum:
+      name: "{{ item }}"
+      state: present
+    loop: "{{ packages }}"
+
+  - name: profile
+    lineinfile:
+      path: /home/vagrant/.bash_profile
+      regexp: '^eval $(ssh-agent) && ssh-add'
+      line: 'eval $(ssh-agent) && ssh-add'
+
+  - name: install pip packages
+    pip:
+      name: "{{ item }}"
+      state: present
+    loop: "{{ pippackages }}"
+
+  - name: edit .sshconfig
+    community.general.ssh_config:
+      state: present
+      user: 'vagrant'
+      host: "192.168.3.*"
+      strict_host_key_checking: 'no'
+      user_known_hosts_file: '/dev/null'

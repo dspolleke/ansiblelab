@@ -1,0 +1,10 @@
+---
+- name: vagrant provision ansible nodes
+  hosts: all
+  become: true
+  tasks:
+  - name: copy sshkey
+    ansible.posix.authorized_key:
+      user: vagrant
+      state: present
+      key: "{{ lookup('file','./files/vagrant.pub') }}"
